@@ -1,25 +1,46 @@
-import React from "react";
+import React, { useState } from "react";
 import { Select, Typography, Row, Col, Avatar, Card } from "antd";
 import moment from "moment";
 
 import { useGetCryptoNewsQuery } from "../services/cryptoNewsApi";
+import { useGetCryptosQuery } from "../services/cryptoApi";
 
 const { Text, Title } = Typography;
 const { Option } = Select;
 const defaultImageUrl = "";
 
 const News = ({ simplified }) => {
+  const [newsCategory, setNewsCategory] = useState("Cryptocurrency");
   const { data: cryptoNews } = useGetCryptoNewsQuery({
-    newsCategory: "Cryptocurrency",
-    count: simplified ? 6 : 12,
+    newsCategory: newsCategory,
+    count: simplified ? 7 : 13,
   });
+  const { data: cryptosList } = useGetCryptosQuery(100);
 
-  if (!cryptoNews?.value) {
+  if (!cryptoNews?.value) {    
     return "Loading...";
-  }
+  } 
 
   return (
     <Row gutter={[24, 24]}>
+      {!simplified && (
+        <Col span={24}>
+          <Select
+            showSearch
+            className="select-news"
+            placeholder="Select a Cryptocurrency"
+            optionFilterProp="children"
+            onChange={(value) => setNewsCategory(value)}
+            filterOption={(input, option) =>
+              option.children.toLowerCase().indexOf(input.toLowerCase()) 
+              >= 0
+            }
+          >
+            <Option value="Cryptocurrency">Cryptocurrency</Option>
+            {cryptosList?.data?.coins.map((coin) => <Option value={coin.name}>{coin.name}</Option>)}
+          </Select>
+        </Col>
+      )}
       {cryptoNews.value.map((article, index) => (
         <Col xs={24} sm={12} lg={8} key={index}>
           <Card className="news-card" hoverable>
@@ -29,7 +50,7 @@ const News = ({ simplified }) => {
                   {article.name}
                 </Title>
                 <img
-                  style={{maxWidth: "200px", maxHeight: "100px"}}
+                  style={{ maxWidth: "200px", maxHeight: "100px" }}
                   src={article?.image?.thumbnail?.contentUrl || defaultImageUrl}
                   alt="news thumbnail image"
                 />
@@ -48,7 +69,9 @@ const News = ({ simplified }) => {
                     }
                     alt="news provider image"
                   />
-                  <Text classname="provider-name">{article.provider[0]?.name}</Text>
+                  <Text className="provider-name">
+                    {article.provider[0]?.name}
+                  </Text>
                 </div>
                 <Text>
                   {moment(article.datePublished).startOf("ss").fromNow()}
